@@ -55,6 +55,10 @@ pub struct Flex {
     fill_major_axis: bool,
     children: Vec<Child>,
     gap: Length,
+    // --- MARK: Modified ---
+    /// The direction of the app language. If it's right to left, and it's a row,
+    /// then the items will be placed from the right to left.
+    right_to_left: bool,
 }
 
 /// Optional parameters for an item in a [`Flex`] container (row or column).
@@ -97,6 +101,8 @@ impl Flex {
             main_alignment: MainAxisAlignment::Start,
             fill_major_axis: false,
             gap: DEFAULT_GAP,
+            // --- MARK: Modified ---
+            right_to_left: false,
         }
     }
 
@@ -197,6 +203,16 @@ impl Flex {
         };
         let new_child = Child::FlexedSpacer(flex, 0.0);
         self.children.push(new_child);
+        self
+    }
+
+    // --- MARK: Modified ---
+    /// Builder-style method for setting the right to left direction of the app.
+    /// 
+    /// This will influence whether the flex row items will be
+    /// position and placed from the right side to the left side.
+    pub fn with_rtl(mut self, right_to_left: bool) -> Self {
+        self.right_to_left = right_to_left;
         self
     }
 
@@ -649,7 +665,7 @@ impl Widget for Flex {
         let mut max_below_baseline = 0_f64;
 
         // MEASURE FIXED CHILDREN AND FLEX SUM
-        for child in &mut self.children {
+        for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
             match child {
                 Child::Fixed { widget, .. } => {
                     // The BoxConstraints of fixed-children only depends on the BoxConstraints of the
@@ -692,7 +708,7 @@ impl Widget for Flex {
         let px_per_flex = remaining_major / flex_sum;
 
         // MEASURE FLEX CHILDREN
-        for child in &mut self.children {
+        for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
             match child {
                 Child::Flex { widget, flex, .. } => {
                     let child_size = {
@@ -739,7 +755,7 @@ impl Widget for Flex {
         // DISTRIBUTE EXTRA SPACE
         let mut major = space_before;
         let mut previous_was_widget = false;
-        for child in &mut self.children {
+        for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
             match child {
                 Child::Fixed { widget, alignment }
                 | Child::Flex {
@@ -879,6 +895,38 @@ impl Widget for Flex {
 
     fn make_trace_span(&self, id: WidgetId) -> Span {
         trace_span!("Flex", id = id.trace())
+    }
+}
+
+// --- MARK: Modified ---
+enum LanguageAwareIter<'a> {
+    Forward(std::slice::IterMut<'a, Child>),
+    Reverse(std::iter::Rev<std::slice::IterMut<'a, Child>>)
+}
+
+impl<'a> LanguageAwareIter<'a> {
+    /// A method to provide an iterator for the children of flex.
+    /// 
+    /// When flex is a row and the app language is right to left,
+    /// then we iterate in reverse to position the children from the right
+    /// side to the left side.
+    fn iter(children: &'a mut Vec<Child>, direction: Axis, right_to_left: bool) -> Self {
+        if direction == Axis::Horizontal && right_to_left {
+            LanguageAwareIter::Reverse(children.iter_mut().rev())
+        } else {
+            LanguageAwareIter::Forward(children.iter_mut())
+        }
+    }
+}
+
+impl<'a> Iterator for LanguageAwareIter<'a> {
+    type Item = &'a mut Child;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            LanguageAwareIter::Forward(iter_mut) => iter_mut.next(),
+            LanguageAwareIter::Reverse(rev) => rev.next(),
+        }
     }
 }
 
