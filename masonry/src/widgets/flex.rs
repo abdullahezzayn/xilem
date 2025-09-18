@@ -53,6 +53,30 @@ pub struct Flex {
     cross_alignment: CrossAxisAlignment,
     main_alignment: MainAxisAlignment,
     children: Vec<Child>,
+    // --- MARK: Modified ---
+    /// The direction of the app language. If it's right to left, and it's a row,
+    /// then the items will be placed from the right to left.
+    right_to_left: bool,
+}
+
+/// The initial size of a [`Flex`] child before extra space distribution.
+///
+/// Children are ensured this initial size and if there is any extra space left,
+/// that remaining space gets divided among the children based on their flex factors.
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
+pub enum FlexBasis {
+    /// Automatically determine the basis based on how the child wants to be sized.
+    ///
+    /// If the child has no defined size, then its `MaxContent` will be measured.
+    ///
+    /// # Performance
+    ///
+    /// If used in combination with a non-zero flex factor it will cause
+    /// an additional measurement pass on this child during [`Flex`]'s layout.
+    #[default]
+    Auto,
+    /// Always use a zero basis for the child, regardless of its sizing wishes.
+    Zero,
 }
 
 /// The initial size of a [`Flex`] child before extra space distribution.
@@ -144,6 +168,8 @@ impl Flex {
             children: Vec::new(),
             cross_alignment: CrossAxisAlignment::Center,
             main_alignment: MainAxisAlignment::Start,
+            // --- MARK: Modified ---
+            right_to_left: false,
         }
     }
 
@@ -225,6 +251,16 @@ impl Flex {
             length_resolved: 0.,
         };
         self.children.push(new_child);
+        self
+    }
+
+    // --- MARK: Modified ---
+    /// Builder-style method for setting the right to left direction of the app.
+    /// 
+    /// This will influence whether the flex row items will be
+    /// position and placed from the right side to the left side.
+    pub fn with_rtl(mut self, right_to_left: bool) -> Self {
+        self.right_to_left = right_to_left;
         self
     }
 }
@@ -745,7 +781,7 @@ impl Widget for Flex {
             // Basis is always resolved with a MaxContent fallback
             let main_auto = LenDef::MaxContent;
 
-            for child in &mut self.children {
+            for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
                 match child {
                     Child::Widget {
                         widget,
@@ -788,7 +824,7 @@ impl Widget for Flex {
             let mut flex_fraction: f64 = 0.;
             let main_auto = len_req.into();
 
-            for child in &mut self.children {
+            for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
                 let desired_flex_fraction = match child {
                     Child::Widget {
                         widget,
@@ -860,7 +896,7 @@ impl Widget for Flex {
             let flex_fraction = main_space.map(|mut main_space| {
                 // Sum flex factors and subtract bases from main space.
                 let mut flex_sum = 0.;
-                for child in &mut self.children {
+                for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
                     match child {
                         Child::Widget {
                             flex,
@@ -890,7 +926,7 @@ impl Widget for Flex {
             });
 
             // Calculate the total space needed for all children
-            for child in &mut self.children {
+            for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
                 match child {
                     Child::Widget {
                         widget,
@@ -992,7 +1028,7 @@ impl Widget for Flex {
 
         // Sum flex factors, resolve bases, subtract bases from main space,
         // and lay out inflexible widgets.
-        for child in &mut self.children {
+        for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
             match child {
                 Child::Widget {
                     widget,
@@ -1057,7 +1093,7 @@ impl Widget for Flex {
         };
 
         // Offer the available space to flexible children
-        for child in &mut self.children {
+        for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
             match child {
                 Child::Widget {
                     widget,
@@ -1103,7 +1139,7 @@ impl Widget for Flex {
         // Distribute free space and place children
         let mut main_offset = space_before;
         let mut previous_was_widget = false;
-        for child in &mut self.children {
+        for child in LanguageAwareIter::iter(&mut self.children, self.direction, self.right_to_left) {
             match child {
                 Child::Widget {
                     widget, alignment, ..
@@ -1193,6 +1229,38 @@ impl Widget for Flex {
 
     fn make_trace_span(&self, id: WidgetId) -> Span {
         trace_span!("Flex", id = id.trace())
+    }
+}
+
+// --- MARK: Modified ---
+enum LanguageAwareIter<'a> {
+    Forward(std::slice::IterMut<'a, Child>),
+    Reverse(std::iter::Rev<std::slice::IterMut<'a, Child>>)
+}
+
+impl<'a> LanguageAwareIter<'a> {
+    /// A method to provide an iterator for the children of flex.
+    /// 
+    /// When flex is a row and the app language is right to left,
+    /// then we iterate in reverse to position the children from the right
+    /// side to the left side.
+    fn iter(children: &'a mut Vec<Child>, direction: Axis, right_to_left: bool) -> Self {
+        if direction == Axis::Horizontal && right_to_left {
+            LanguageAwareIter::Reverse(children.iter_mut().rev())
+        } else {
+            LanguageAwareIter::Forward(children.iter_mut())
+        }
+    }
+}
+
+impl<'a> Iterator for LanguageAwareIter<'a> {
+    type Item = &'a mut Child;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            LanguageAwareIter::Forward(iter_mut) => iter_mut.next(),
+            LanguageAwareIter::Reverse(rev) => rev.next(),
+        }
     }
 }
 
