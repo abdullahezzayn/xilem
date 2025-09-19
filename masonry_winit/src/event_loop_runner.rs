@@ -202,7 +202,7 @@ pub struct MasonryState<'a> {
     #[cfg(feature = "tracy")]
     frame: Option<tracing_tracy::client::Frame>,
 
-    window_id_to_handle_id: HashMap<WindowId, HandleId>,
+    pub window_id_to_handle_id: HashMap<WindowId, HandleId>,
 
     surfaces: HashMap<HandleId, RenderSurface<'a>>,
     windows: HashMap<HandleId, Window>,
