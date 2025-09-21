@@ -45,6 +45,31 @@ pub struct Portal<V, State, Action> {
 
 // --- MARK: Modified ---
 impl<V, State, Action> Portal<V, State, Action> {
+    /// Builder-style method for deciding whether to constrain the child vertically.
+    ///
+    /// The default is `false`.
+    ///
+    /// This setting affects how a `Portal` lays out its child.
+    ///
+    /// - When it is `false` (the default), the child does not receive any upper
+    ///   bound on its height: the idea is that the child can be as tall as it
+    ///   wants, and the viewport will somehow get moved around to see all of it.
+    /// - When it is `true`, the viewport's maximum height will be passed down
+    ///   as an upper bound on the height of the child, and the viewport will set
+    ///   its own height to be the same as its child's height.
+    pub fn constrain_vertical(mut self, constrain: bool) -> Self {
+        self.constrain_vertical = constrain;
+        self
+    }
+
+    /// Builder-style method for deciding whether to constrain the child horizontally.
+    ///
+    /// The default is `false`.
+    pub fn constrain_horizontal(mut self, constrain: bool) -> Self {
+        self.constrain_horizontal = constrain;
+        self
+    }
+
     /// Builder-style method to set whether the child must fill the view.
     ///
     /// If `false` (the default) there is no minimum constraint on the child's
@@ -86,6 +111,8 @@ where
         let (child, child_state) = self.child.build(ctx, app_state);
         let widget_pod = ctx.create_pod(
             widgets::Portal::new(child.new_widget)
+                .constrain_horizontal(self.constrain_horizontal)
+                .constrain_vertical(self.constrain_vertical)
                 .content_must_fill(self.must_fill)
                 .with_rtl(self.right_to_left)
         );
