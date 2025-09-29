@@ -290,7 +290,7 @@ impl<W: Widget + FromDynWidget + ?Sized> Widget for Portal<W> {
                 // TODO - Remove reference to scale factor.
                 // See https://github.com/linebender/xilem/issues/1264
                 let delta = match delta {
-                    ScrollDelta::PixelDelta(PhysicalPosition::<f64> { x, y }) => -Vec2 { x, y },
+                    ScrollDelta::PixelDelta(PhysicalPosition::<f64> { x, y }) => -Vec2 { x, y } / 4.0,
                     ScrollDelta::LineDelta(x, y) => {
                         -Vec2 {
                             x: x as f64,
