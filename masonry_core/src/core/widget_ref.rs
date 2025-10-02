@@ -145,6 +145,16 @@ impl<'w, W: Widget + ?Sized> WidgetRef<'w, W> {
 }
 
 impl<'w, W: Widget> WidgetRef<'w, W> {
+    /// Remake the `WidgetRef` from its component widget and context,
+    /// useful for specific implementors of [`Widget::find_widget_under_pointer`],
+    /// to allow for returning the `WidgetRef` for self.
+    pub fn remake(ctx: QueryCtx<'w>, widget: &'w W) -> Self {
+        WidgetRef {
+            ctx: ctx,
+            widget: widget,
+        }
+    }
+
     /// Returns a type-erased `WidgetRef`.
     pub fn as_dyn(&self) -> WidgetRef<'w, dyn Widget> {
         WidgetRef {
