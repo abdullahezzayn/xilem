@@ -79,26 +79,6 @@ pub enum FlexBasis {
     Zero,
 }
 
-/// The initial size of a [`Flex`] child before extra space distribution.
-///
-/// Children are ensured this initial size and if there is any extra space left,
-/// that remaining space gets divided among the children based on their flex factors.
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
-pub enum FlexBasis {
-    /// Automatically determine the basis based on how the child wants to be sized.
-    ///
-    /// If the child has no defined size, then its `MaxContent` will be measured.
-    ///
-    /// # Performance
-    ///
-    /// If used in combination with a non-zero flex factor it will cause
-    /// an additional measurement pass on this child during [`Flex`]'s layout.
-    #[default]
-    Auto,
-    /// Always use a zero basis for the child, regardless of its sizing wishes.
-    Zero,
-}
-
 /// Optional parameters for an item in a [`Flex`] container (row or column).
 ///
 /// Generally, when you would like to add a flexible child to a container,
