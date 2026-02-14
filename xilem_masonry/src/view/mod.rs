@@ -3,6 +3,7 @@
 
 //! Views for the widgets which are built-in to Masonry. These are the primitives your Xilem app's view tree will generally be constructed from.
 
+mod backdrop_blur;
 mod button;
 mod canvas;
 mod checkbox;
@@ -29,6 +30,7 @@ mod virtual_scroll;
 mod worker;
 mod zstack;
 
+pub use self::backdrop_blur::*;
 pub use self::button::*;
 pub use self::canvas::*;
 pub use self::checkbox::*;

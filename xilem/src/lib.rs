@@ -75,6 +75,7 @@
 //! * [`grid`][crate::view::grid]: divides a window into regions and defines the relationship
 //!   between inner elements in terms of size and position
 //! * [`sized_box`][crate::view::sized_box]: forces its child to have a specific width and/or height
+//! * [`backdrop_blur`][crate::view::backdrop_blur]: frosted-glass style container for blur overlays
 //! * [`split`][crate::view::split]: contains two views splitting the area either vertically or horizontally which can be resized.
 //! * [`button`][crate::view::button]: basic button element
 //! * [`image`][crate::view::image]: displays a bitmap image

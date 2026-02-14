@@ -18,7 +18,8 @@ use crate::properties::{
     UnfocusedSelectionColor,
 };
 use crate::widgets::{
-    Button, Checkbox, Divider, Flex, Grid, Label, ProgressBar, Spinner, Switch, TextArea, TextInput,
+    BackdropBlur, Button, Checkbox, Divider, Flex, Grid, Label, ProgressBar, Spinner, Switch,
+    TextArea, TextInput,
 };
 
 /// Default color for the app background.
@@ -74,6 +75,17 @@ pub fn default_property_set() -> DefaultProperties {
     properties.insert::<Button, _>(BorderColor { color: ZYNC_700 });
     properties.insert::<Button, _>(HoveredBorderColor(BorderColor { color: ZYNC_500 }));
     properties.insert::<Button, _>(FocusedBorderColor(BorderColor { color: FOCUS_COLOR }));
+
+    // BackdropBlur
+    properties.insert::<BackdropBlur, _>(CornerRadius { radius: 14. });
+    properties.insert::<BackdropBlur, _>(BorderWidth {
+        width: BORDER_WIDTH,
+    });
+    properties
+        .insert::<BackdropBlur, _>(Background::Color(Color::from_rgba8(0xff, 0xff, 0xff, 0x14)));
+    properties.insert::<BackdropBlur, _>(BorderColor {
+        color: Color::from_rgba8(0xff, 0xff, 0xff, 0x2d),
+    });
 
     // Checkbox
     properties.insert::<Checkbox, _>(CornerRadius { radius: 4. });
