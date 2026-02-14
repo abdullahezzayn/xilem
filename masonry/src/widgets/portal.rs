@@ -781,11 +781,11 @@ impl<W: Widget + FromDynWidget + ?Sized> Widget for Portal<W> {
             );
             ctx.run_layout(&mut self.scrollbar_vertical, scrollbar_size);
             let x_position = if self.right_to_left { 0.0 } else {
-                portal_size.width - scrollbar_size.width
+                size.width - scrollbar_size.width
             };
             ctx.place_child(
                 &mut self.scrollbar_vertical,
-                Point::new(size.width - scrollbar_size.width, 0.0),
+                Point::new(x_position, 0.0),
             );
         }
     }
